@@ -40,6 +40,34 @@ def get_container_logs(container_name:str, lines: int = 50) -> str:
 
 
 
+@mcp.tool()
+def check_container_health(container_name: str) -> dict:
+    """
+    Check the health status of a specific Docker container.
+    """
+    try:
+        container = client.containers.get(container_name)
+        state = container.attrs.get("State", {})
+
+        return {
+            "name": container.name,
+            "status": state.get("Status"),
+            "health": state.get("Health", {}).get(
+                "Status", "not_configured"
+            ),
+            "restart_count": container.attrs.get("RestartCount", 0),
+            "oom_killed": state.get("OOMKilled"),
+            "exit_code": state.get("ExitCode")
+        }
+
+    except docker.errors.NotFound:
+        return {"error": f"Container '{container_name}' not found."}
+
+    except docker.errors.APIError as e:
+        logger.error("Error checking container health: %s", e)
+        return {"error": "Failed to retrieve container health status."}
+
+
 
 if __name__ == "__main__":
     logger.info("Starting Docker Monitor MCP server...")
