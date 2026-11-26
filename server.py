@@ -20,7 +20,7 @@ def list_containers(include_stopped: bool = True) -> list[dict]:
     return [
         
         { 
-            
+
         "id": container.short_id,
         "name": container.name,
         "status": container.status,
@@ -76,6 +76,94 @@ def check_container_health(container_name: str) -> dict:
         return {"error": "Failed to retrieve container health status."}
 
 
+
+
+@mcp.tool()
+def get_container_stats(container_name: str) -> dict:
+    """
+    Get CPU, memory and network statistics of a Docker container.
+    """
+    try:
+        container = client.containers.get(container_name)
+
+        # Verify that the container is running
+        if container.status != "running":
+            return {
+                "error": f"Container '{container_name}' is not running."
+            }
+
+        # Retrieve container statistics
+        stats = container.stats(stream=False)
+
+        # CPU statistics
+        cpu_stats = stats.get("cpu_stats", {})
+        precpu_stats = stats.get("precpu_stats", {})
+
+        cpu_usage = cpu_stats.get("cpu_usage", {}).get("total_usage")
+        prev_cpu_usage = precpu_stats.get("cpu_usage", {}).get("total_usage")
+
+        system_usage = cpu_stats.get("system_cpu_usage")
+        prev_system_usage = precpu_stats.get("system_cpu_usage")
+
+        online_cpus = cpu_stats.get("online_cpus") or len(
+            cpu_stats.get("cpu_usage", {}).get("percpu_usage") or []
+        )
+
+        # Calculate CPU utilization
+        cpu_percent = None
+
+        if None not in (
+            cpu_usage, prev_cpu_usage,
+            system_usage, prev_system_usage
+        ):
+            cpu_delta = cpu_usage - prev_cpu_usage
+            system_delta = system_usage - prev_system_usage
+
+            if system_delta > 0 and cpu_delta >= 0 and online_cpus > 0:
+                cpu_percent = (
+                    (cpu_delta / system_delta) * online_cpus * 100
+                )
+
+        # Memory statistics
+        memory_stats = stats.get("memory_stats", {})
+        memory_usage = memory_stats.get("usage")
+        memory_limit = memory_stats.get("limit")
+
+        # Calculate memory utilization
+        memory_percent = (
+            (memory_usage / memory_limit) * 100
+            if memory_usage is not None and memory_limit and memory_limit > 0
+            else None
+        )
+
+        # Return structured monitoring data
+        return {
+            "name": container.name,
+            "status": container.status,
+
+            "cpu_percent": round(cpu_percent, 2)
+            if cpu_percent is not None else None,
+
+            "memory_usage_mib": round(memory_usage / (1024 ** 2), 2)
+            if memory_usage is not None else None,
+
+            "memory_limit_mib": round(memory_limit / (1024 ** 2), 2)
+            if memory_limit is not None else None,
+
+            "memory_percent": round(memory_percent, 2)
+            if memory_percent is not None else None,
+
+            "network_io": stats.get("networks", {}),
+        }
+
+    except docker.errors.NotFound:
+        return {"error": f"Container '{container_name}' not found."}
+
+    except docker.errors.APIError as e:
+        logger.error("Error fetching container stats: %s", e)
+        return {"error": "Failed to retrieve container statistics."}
+
+    
 
 if __name__ == "__main__":
     logger.info("Starting Docker Monitor MCP server...")
