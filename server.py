@@ -12,12 +12,21 @@ logger = logging.getLogger(__name__)
 
 
 @mcp.tool()
-def list_containers():
+def list_containers(include_stopped: bool = True) -> list[dict]:
     """
     List all running Docker containers.
     """
-    list_of_containers = client.containers.list()
-    return [container.name for container in list_of_containers]
+    list_of_containers = client.containers.list(all=include_stopped)
+    return [
+        
+        { 
+        "id": container.short_id,
+        "name": container.name,
+        "status": container.status,
+        "image": container.attrs.get("Config", {}).get("Image", "unknown")
+         
+        } for container in list_of_containers    
+    ]
 
 @mcp.tool()
 def get_container_logs(container_name:str, lines: int = 50) -> str:
@@ -37,8 +46,6 @@ def get_container_logs(container_name:str, lines: int = 50) -> str:
         logger.error(f"Error fetching logs for container '{container_name}': {e}")
         return  "Failed to retrieve container logs."
     
-
-
 
 @mcp.tool()
 def check_container_health(container_name: str) -> dict:
