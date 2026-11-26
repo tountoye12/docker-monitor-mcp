@@ -20,6 +20,7 @@ def list_containers(include_stopped: bool = True) -> list[dict]:
     return [
         
         { 
+            
         "id": container.short_id,
         "name": container.name,
         "status": container.status,
