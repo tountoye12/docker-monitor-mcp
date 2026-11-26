@@ -11,8 +11,8 @@ def list_containers():
     """
     List all running Docker containers.
     """
-    #print("Listing all running Docker containers...")
-    return "Docker Monitoring is working"
+    list_of_containers = client.containers.list()
+    return [container.name for container in list_of_containers]
 
 
 
