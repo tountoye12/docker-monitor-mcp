@@ -15,7 +15,8 @@ def list_containers():
     return [container.name for container in list_of_containers]
 
 
-list_containers()
+print("Docker Monitor MCP is running...")
+print(list_containers())
 
 if __name__ == "__main__":
     mcp.run(transport="stdio")
