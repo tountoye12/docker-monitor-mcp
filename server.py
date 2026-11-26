@@ -11,7 +11,10 @@ def list_containers():
     """
     List all running Docker containers.
     """
-    print("Listing all running Docker containers...")
+    #print("Listing all running Docker containers...")
     return "Docker Monitoring is working"
 
-list_containers()
+
+
+if __name__ == "__main__":
+    mcp.run(transport="stdio")
