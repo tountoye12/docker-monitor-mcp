@@ -13,3 +13,5 @@ def list_containers():
     """
     print("Listing all running Docker containers...")
     return "Docker Monitoring is working"
+
+list_containers()
