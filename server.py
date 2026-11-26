@@ -1,4 +1,4 @@
-from mcp.server.fastmcp import FASTMCP
+from mcp.server.FastMCP import FASTMCP
 import docker
 
 
