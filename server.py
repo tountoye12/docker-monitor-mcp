@@ -1,6 +1,6 @@
 import docker
-from mcp.server.fastmcp import FasTMCP
+from mcp.server.fastmcp import FastMCP
 
-mcp = FasTMCP("Docker Monitor", "docker-monitor-mcp", "0.1.0")
+mcp = FastMCP("Docker Monitor", "docker-monitor-mcp", "0.1.0")
 
 client = docker.from_env()
