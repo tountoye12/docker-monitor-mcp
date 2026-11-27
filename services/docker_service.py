@@ -2,6 +2,8 @@ import docker
 import logging
 from security.sanitizer import sanitize_logs
 
+from requests.exceptions import Timeout, ConnectionError
+
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -41,6 +43,21 @@ def get_container_logs(container_name: str, lines: int = 50) -> str:
 
     except docker.errors.NotFound:
         return f"Container '{container_name}' not found."
+
+
+    except Timeout as e:
+        logger.error(
+            f"Network error while fetching logs for container '{container_name}': {e}"
+            )
+        return "Network error occurred while retrieving container logs."
+
+
+    except ConnectionError as e:
+        logger.error(
+            f"Connection error while fetching logs for container '{container_name}': {e}"
+            )
+        return "Connection error occurred while retrieving container logs."
+    
 
     except docker.errors.APIError as e:
         logger.error(f"Error fetching logs for container '{container_name}': {e}")
@@ -157,8 +174,6 @@ def get_container_stats(container_name: str) -> dict:
         logger.error("Error fetching container stats: %s", e)
         return {"error": "Failed to retrieve container statistics."}
 
-
-
 def detect_errors(container_name: str, lines: int = 100) -> dict:
     """
     Analyze recent Docker container logs for errors and warnings.
@@ -209,6 +224,19 @@ def detect_errors(container_name: str, lines: int = 100) -> dict:
 
     except docker.errors.NotFound:
         return {"error": f"Container '{container_name}' not found."}
+
+
+    except Timeout as e:
+        logger.error(
+            f"Network error while analyzing logs for container '{container_name}': {e}"
+        )
+        return {"error": "Network error occurred while analyzing container logs."}
+
+    except ConnectionError as e:
+        logger.error(
+            f"Connection error while analyzing logs for container '{container_name}': {e}"
+        )
+        return {"error": "Connection error occurred while analyzing container logs."}
 
     except docker.errors.APIError as e:
         logger.error("Error analyzing container logs: %s", e)
