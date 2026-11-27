@@ -13,9 +13,11 @@ async def main():
     async with stdio_client(server_params) as (read, write):
         async with ClientSession(read, write) as session:
             tools = await session.initialize()
-            for tool in tools.tools:
-                print(f"Tool: {tool.name}")
-                print(f"Description: {tool.description}")
+            print("Tools available:")
+            print(tools)
+            # for tool in tools.tools:
+            #     print(f"Tool: {tool.name}")
+            #     print(f"Description: {tool.description}")
 
 
 if __name__ == "__main__":
