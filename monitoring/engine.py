@@ -12,7 +12,7 @@ from monitoring.evaluator import (
     evaluate_health,
 )
 
-from Collections import Counter
+from collections import Counter
 from datetime import datetime, timezone
 
 logger = logging.getLogger(__name__)
