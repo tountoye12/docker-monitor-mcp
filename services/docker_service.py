@@ -3,6 +3,7 @@ import logging
 from security.sanitizer import sanitize_logs
 
 from requests.exceptions import Timeout, ConnectionError
+from utils.log_normalizer import normalize_logs
 
 
 logging.basicConfig(level=logging.INFO)
@@ -39,7 +40,12 @@ def get_container_logs(container_name: str, lines: int = 50) -> str:
         container = client.containers.get(container_name)
         logs = container.logs(tail=lines)
 
-        return sanitize_logs(logs.decode("utf-8", errors="replace"))
+        #return sanitize_logs(logs.decode("utf-8", errors="replace"))
+        decoded_logs = logs.decode("utf-8", errors="replace")
+        normalized_logs = normalize_logs(decoded_logs)
+        sanitized_logs = sanitize_logs(normalized_logs)
+
+        return sanitized_logs
 
     except docker.errors.NotFound:
         return f"Container '{container_name}' not found."
@@ -62,6 +68,7 @@ def get_container_logs(container_name: str, lines: int = 50) -> str:
     except docker.errors.APIError as e:
         logger.error(f"Error fetching logs for container '{container_name}': {e}")
         return "Failed to retrieve container logs."
+    
 
 def check_container_health(container_name: str) -> dict:
     """
@@ -174,6 +181,8 @@ def get_container_stats(container_name: str) -> dict:
         logger.error("Error fetching container stats: %s", e)
         return {"error": "Failed to retrieve container statistics."}
 
+
+
 def detect_errors(container_name: str, lines: int = 100) -> dict:
     """
     Analyze recent Docker container logs for errors and warnings.
@@ -197,7 +206,9 @@ def detect_errors(container_name: str, lines: int = 100) -> dict:
         )
 
         # Split logs into individual lines
-        log_lines = logs.splitlines()
+        #log_lines = logs.splitlines()
+        normalized_logs = normalize_logs(logs)
+        log_lines = normalized_logs.splitlines()
 
         errors = []
         warnings = []
