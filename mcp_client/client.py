@@ -4,21 +4,7 @@ import asyncio
 from mcp import ClientSession
 from mcp.client.streamable_http import streamablehttp_client
 
-SERVER_URL = "http://127.0.0.1:8000/mcp"
-
-
-server_params = StdioServerParameters(
-    command="uv",
-    args=["run", "python", "-m", "mcp_server.server"]
-)
-
-import asyncio
-
-from mcp import ClientSession
-from mcp.client.streamable_http import streamablehttp_client
-
-SERVER_URL = "http://127.0.0.1:8000/mcp"
-
+SERVER_URL = "http://127.0.0.1:8001/mcp"
 
 async def main():
     async with streamablehttp_client(SERVER_URL) as (read, write, _):
