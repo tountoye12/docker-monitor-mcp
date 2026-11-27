@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 mcp = FastMCP(
     "Docker Monitor",
     host="127.0.0.1",
-    port=8000
+    port=8001
 )
 
 register_tools(mcp)
