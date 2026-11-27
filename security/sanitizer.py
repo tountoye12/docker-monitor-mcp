@@ -9,7 +9,7 @@ SENSITIVE_PATTERNS = [
 ]
 
 
-def sanitize_log(logs: str) -> str:
+def sanitize_logs(logs: str) -> str:
     """
     Sanitize sensitive information from logs using predefined patterns.
     """
