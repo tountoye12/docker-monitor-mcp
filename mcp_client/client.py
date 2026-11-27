@@ -14,19 +14,45 @@ async def main():
             # Discover available tools
             tools = await session.list_tools()
 
-            print("Available MCP tools:")
-
+            print("\nAvailable MCP tools:")
             for tool in tools.tools:
                 print(f"- {tool.name}: {tool.description}")
 
-            # Execute a tool
+            # Select a tool
+            tool_name = input("\nEnter tool name: ").strip()
+
+            arguments = {}
+
+            if tool_name == "list_containers":
+                arguments["include_stopped"] = True
+
+            elif tool_name in [
+                "get_container_logs",
+                "check_container_health",
+                "get_container_stats",
+                "detect_errors"
+            ]:
+                arguments["container_name"] = input(
+                    "Container name: "
+                ).strip()
+
+            else:
+                print("Unknown tool.")
+                return
+
+            # Execute selected tool
             result = await session.call_tool(
-                "list_containers",
-                arguments={"include_stopped": True}
+                tool_name,
+                arguments=arguments
             )
 
+            # Display formatted JSON response
             print("\nTool execution result:")
-            print(result)
+            print(result.model_dump_json(indent=2))
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
 
 
 if __name__ == "__main__":
