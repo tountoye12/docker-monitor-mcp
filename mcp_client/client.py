@@ -1,7 +1,10 @@
 
-from mcp import ClientSession, StdioServerParameters
-from mcp.client.stdio import stdio_client
 import asyncio
+
+from mcp import ClientSession
+from mcp.client.streamable_http import streamablehttp_client
+
+SERVER_URL = "http://127.0.0.1:8000/mcp"
 
 
 server_params = StdioServerParameters(
@@ -9,8 +12,16 @@ server_params = StdioServerParameters(
     args=["run", "python", "-m", "mcp_server.server"]
 )
 
+import asyncio
+
+from mcp import ClientSession
+from mcp.client.streamable_http import streamablehttp_client
+
+SERVER_URL = "http://127.0.0.1:8000/mcp"
+
+
 async def main():
-    async with stdio_client(server_params) as (read, write):
+    async with streamablehttp_client(SERVER_URL) as (read, write, _):
         async with ClientSession(read, write) as session:
             await session.initialize()
 
@@ -18,8 +29,9 @@ async def main():
             tools = await session.list_tools()
 
             print("Available MCP tools:")
+
             for tool in tools.tools:
-                print(f"- {tool.name}: {tool.description.strip()}")
+                print(f"- {tool.name}: {tool.description}")
 
             # Execute a tool
             result = await session.call_tool(
@@ -29,6 +41,10 @@ async def main():
 
             print("\nTool execution result:")
             print(result)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
 
 
 if __name__ == "__main__":
