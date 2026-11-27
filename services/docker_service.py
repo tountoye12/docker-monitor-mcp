@@ -4,6 +4,7 @@ from security.sanitizer import sanitize_logs
 
 from requests.exceptions import Timeout, ConnectionError
 from utils.log_normalizer import normalize_logs
+from utils.log_analyzer import classify_log
 
 
 logging.basicConfig(level=logging.INFO)
@@ -192,12 +193,6 @@ def detect_errors(container_name: str, lines: int = 100) -> dict:
     if not 1 <= lines <= 1000:
         return {"error": "Lines must be between 1 and 1000."}
 
-    error_keywords = [
-        "error", "fatal", "critical", "exception", "timeout"
-    ]
-
-    warning_keywords = ["warning", "warn"]
-
     try:
         # Retrieve container and logs
         container = client.containers.get(container_name)
@@ -215,12 +210,12 @@ def detect_errors(container_name: str, lines: int = 100) -> dict:
 
         # Analyze each log entry
         for line in log_lines:
-            lower_line = line.lower()
+            severity = classify_log(line)
 
-            if any(keyword in lower_line for keyword in error_keywords):
+            if severity == "error":
                 errors.append(sanitize_logs(line))
 
-            elif any(keyword in lower_line for keyword in warning_keywords):
+            elif severity == "warning":
                 warnings.append(sanitize_logs(line))
 
         # Return structured monitoring results
