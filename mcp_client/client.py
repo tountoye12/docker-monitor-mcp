@@ -12,24 +12,23 @@ server_params = StdioServerParameters(
 async def main():
     async with stdio_client(server_params) as (read, write):
         async with ClientSession(read, write) as session:
+            await session.initialize()
 
-            init_result = await session.initialize()
+            # Discover available tools
+            tools = await session.list_tools()
 
-            print("Server information:")
-            print(init_result.serverInfo)
+            print("Available MCP tools:")
+            for tool in tools.tools:
+                print(f"- {tool.name}: {tool.description.strip()}")
 
-            tools_result = await session.list_tools()
+            # Execute a tool
+            result = await session.call_tool(
+                "list_containers",
+                arguments={"include_stopped": True}
+            )
 
-            print("\nRaw tools response:")
-            print(tools_result)
-
-            print("\nResponse type:")
-            print(type(tools_result))
-
-            print("\nAvailable tools:")
-            for tool in tools_result.tools:
-                print(f"Tool: {tool.name}")
-                print(f"Description: {tool.description}")
+            print("\nTool execution result:")
+            print(result)
 
 
 if __name__ == "__main__":
