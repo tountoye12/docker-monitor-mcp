@@ -26,7 +26,7 @@ class MonitoringEngine:
         validate_thresholds()
 
         self.previous_restart_counts = {}
-        self.revious_error = {}
+        self.previous_errors = {}
 
 
         logger.info("Monitoring engine initialized.")
