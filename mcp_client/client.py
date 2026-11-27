@@ -7,10 +7,10 @@ from mcp.client.streamable_http import streamablehttp_client
 SERVER_URL = "http://127.0.0.1:8000/mcp"
 
 
-server_params = StdioServerParameters(
-    command="uv",
-    args=["run", "python", "-m", "mcp_server.server"]
-)
+# server_params = StdioServerParameters(
+#     command="uv",
+#     args=["run", "python", "-m", "mcp_server.server"]
+# )
 
 import asyncio
 
