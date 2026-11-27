@@ -1,14 +1,15 @@
 import logging
 from mcp.server.fastmcp import FastMCP
 from mcp_server.tools import register_tools
+from config.settings import MCP_HOST, MCP_PORT, LOG_LEVEL
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=LOG_LEVEL)
 logger = logging.getLogger(__name__)
 
 mcp = FastMCP(
     "Docker Monitor",
-    host="127.0.0.1",
-    port=8001
+    host=MCP_HOST,
+    port=MCP_PORT
 )
 
 register_tools(mcp)
