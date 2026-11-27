@@ -12,12 +12,24 @@ server_params = StdioServerParameters(
 async def main():
     async with stdio_client(server_params) as (read, write):
         async with ClientSession(read, write) as session:
-            tools = await session.initialize()
-            print("Tools available:")
-            print(tools)
-            # for tool in tools.tools:
-            #     print(f"Tool: {tool.name}")
-            #     print(f"Description: {tool.description}")
+
+            init_result = await session.initialize()
+
+            print("Server information:")
+            print(init_result.serverInfo)
+
+            tools_result = await session.list_tools()
+
+            print("\nRaw tools response:")
+            print(tools_result)
+
+            print("\nResponse type:")
+            print(type(tools_result))
+
+            print("\nAvailable tools:")
+            for tool in tools_result.tools:
+                print(f"Tool: {tool.name}")
+                print(f"Description: {tool.description}")
 
 
 if __name__ == "__main__":
