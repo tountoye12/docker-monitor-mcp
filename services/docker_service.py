@@ -26,24 +26,25 @@ def list_containers(include_stopped: bool = True) -> list[dict]:
     ]
 
 
-def get_container_logs(container_name:str, lines: int = 50) -> str:
-
+def get_container_logs(container_name: str, lines: int = 50) -> str:
     """
-    Get logs of a specific Docker container.
+    Get sanitized logs of a specific Docker container.
     """
-    if not 1 < lines <= 1000:
+    if not 1 <= lines <= 1000:
         return "Please specify a number of lines between 1 and 1000."
+
     try:
         container = client.containers.get(container_name)
         logs = container.logs(tail=lines)
 
         return sanitize_logs(logs.decode("utf-8", errors="replace"))
-        
+
     except docker.errors.NotFound:
         return f"Container '{container_name}' not found."
+
     except docker.errors.APIError as e:
         logger.error(f"Error fetching logs for container '{container_name}': {e}")
-        return  "Failed to retrieve container logs."
+        return "Failed to retrieve container logs."
 
 def check_container_health(container_name: str) -> dict:
     """
@@ -156,6 +157,8 @@ def get_container_stats(container_name: str) -> dict:
         logger.error("Error fetching container stats: %s", e)
         return {"error": "Failed to retrieve container statistics."}
 
+
+
 def detect_errors(container_name: str, lines: int = 100) -> dict:
     """
     Analyze recent Docker container logs for errors and warnings.
@@ -189,10 +192,10 @@ def detect_errors(container_name: str, lines: int = 100) -> dict:
             lower_line = line.lower()
 
             if any(keyword in lower_line for keyword in error_keywords):
-                errors.append(line)
+                errors.append(sanitize_logs(line))
 
             elif any(keyword in lower_line for keyword in warning_keywords):
-                warnings.append(line)
+                warnings.append(sanitize_logs(line))
 
         # Return structured monitoring results
         return {
