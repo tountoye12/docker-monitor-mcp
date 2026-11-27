@@ -31,13 +31,13 @@ def get_container_logs(container_name:str, lines: int = 50) -> str:
     """
     Get logs of a specific Docker container.
     """
-    if not 1 < lines <= 1000:
+    if not 1 <= lines <= 1000:
         return "Please specify a number of lines between 1 and 1000."
     try:
         container = client.containers.get(container_name)
         logs = container.logs(tail=lines)
 
-        return sanitize_logs(logs.decode("utf-8", errors="replace"))
+        return logs.decode("utf-8", errors="replace")
         
     except docker.errors.NotFound:
         return f"Container '{container_name}' not found."
