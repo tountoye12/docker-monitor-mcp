@@ -163,7 +163,66 @@ def get_container_stats(container_name: str) -> dict:
         logger.error("Error fetching container stats: %s", e)
         return {"error": "Failed to retrieve container statistics."}
 
-    
+
+
+@mcp.tool()
+def detect_errors(container_name: str, lines: int = 100) -> dict:
+    """
+    Analyze recent Docker container logs for errors and warnings.
+    """
+
+    # Validate the number of requested lines
+    if not 1 <= lines <= 1000:
+        return {"error": "Lines must be between 1 and 1000."}
+
+    error_keywords = [
+        "error", "fatal", "critical", "exception", "timeout"
+    ]
+
+    warning_keywords = ["warning", "warn"]
+
+    try:
+        # Retrieve container and logs
+        container = client.containers.get(container_name)
+        logs = container.logs(tail=lines).decode(
+            "utf-8", errors="replace"
+        )
+
+        # Split logs into individual lines
+        log_lines = logs.splitlines()
+
+        errors = []
+        warnings = []
+
+        # Analyze each log entry
+        for line in log_lines:
+            lower_line = line.lower()
+
+            if any(keyword in lower_line for keyword in error_keywords):
+                errors.append(line)
+
+            elif any(keyword in lower_line for keyword in warning_keywords):
+                warnings.append(line)
+
+        # Return structured monitoring results
+        return {
+            "name": container.name,
+            "total_lines_analyzed": len(log_lines),
+            "error_count": len(errors),
+            "warning_count": len(warnings),
+            "errors": errors,
+            "warnings": warnings,
+        }
+
+    except docker.errors.NotFound:
+        return {"error": f"Container '{container_name}' not found."}
+
+    except docker.errors.APIError as e:
+        logger.error("Error analyzing container logs: %s", e)
+        return {"error": "Failed to analyze container logs."}
+
+
+
 
 if __name__ == "__main__":
     logger.info("Starting Docker Monitor MCP server...")
