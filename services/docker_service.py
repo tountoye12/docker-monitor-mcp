@@ -38,7 +38,7 @@ def get_container_logs(container_name:str, lines: int = 50) -> str:
         logs = container.logs(tail=lines)
 
         return sanitize_logs(logs.decode("utf-8", errors="replace"))
-    
+        
     except docker.errors.NotFound:
         return f"Container '{container_name}' not found."
     except docker.errors.APIError as e:
@@ -177,8 +177,6 @@ def detect_errors(container_name: str, lines: int = 100) -> dict:
         logs = container.logs(tail=lines).decode(
             "utf-8", errors="replace"
         )
-
-        logs = sanitize_logs(logs)
 
         # Split logs into individual lines
         log_lines = logs.splitlines()
