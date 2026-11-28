@@ -3,6 +3,7 @@ import logging
 
 from config.settings import DATABASE_PATH
 from contextlib import closing
+import json
 
 
 logger = logging.getLogger(__name__)
@@ -65,3 +66,59 @@ def initialize_database() -> None:
             """)
 
     logger.info("Monitoring database initialized.")
+
+
+def save_monitoring_report(report: dict) -> int:
+    """
+    Save an infrastructure monitoring report.
+    """
+
+    with closing(get_connection()) as connection:
+
+        with connection:
+            cursor = connection.execute(
+                """
+                INSERT INTO monitoring_reports (
+                    started_at,
+                    completed_at,
+                    duration_seconds,
+                    report_data
+                )
+                VALUES (?, ?, ?, ?)
+                """,
+                (
+                    report["started_at"],
+                    report["completed_at"],
+                    report["duration_seconds"],
+                    json.dumps(report)
+                )
+            )
+
+            report_id = cursor.lastrowid
+
+    logger.info("Monitoring report saved: %s", report_id)
+
+    return report_id
+
+def get_latest_report() -> dict | None:
+    """
+    Retrieve the most recent infrastructure monitoring report.
+    """
+
+    with closing(get_connection()) as connection:
+
+        row = connection.execute(
+            """
+            SELECT report_data
+            FROM monitoring_reports
+            ORDER BY id DESC
+            LIMIT 1
+            """
+        ).fetchone()
+
+        if row is None:
+            return None
+
+        report = json.loads(row["report_data"])
+
+        return report
