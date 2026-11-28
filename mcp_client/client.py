@@ -12,7 +12,6 @@ async def main():
         async with ClientSession(read, write) as session:
             await session.initialize()
 
-            # Discover available MCP tools
             tools = await session.list_tools()
 
             available_tools = {
@@ -20,35 +19,51 @@ async def main():
                 for tool in tools.tools
             }
 
-            print("\nAvailable MCP tools:")
+            print("\nConnected to MCP server.")
 
-            for tool in available_tools.values():
-                print(f"- {tool.name}: {tool.description}")
+            while True:
 
-            # Select a tool
-            tool_name = input("\nEnter tool name: ").strip()
+                print("\nAvailable MCP tools:")
 
-            selected_tool = available_tools.get(tool_name)
+                for tool in available_tools.values():
+                    print(f"- {tool.name}")
 
-            if selected_tool is None:
-                print("Unknown tool.")
-                return
+                print("\nType 'exit' to close the session.")
 
-            # Dynamically collect arguments
-            arguments = collect_arguments(
-                selected_tool.inputSchema
-            )
+                tool_name = input(
+                    "\nEnter tool name: "
+                ).strip()
 
-            # Execute selected tool
-            result = await session.call_tool(
-                tool_name,
-                arguments=arguments
-            )
+                if tool_name.lower() == "exit":
+                    print("Closing MCP session.")
+                    break
 
-            # Display formatted JSON response
-            print("\nTool execution result:")
-            print(result.model_dump_json(indent=2))
+                selected_tool = available_tools.get(tool_name)
+
+                if selected_tool is None:
+                    print("Unknown tool.")
+                    continue
+
+                try:
+                    arguments = collect_arguments(
+                        selected_tool.inputSchema
+                    )
+
+                    result = await session.call_tool(
+                        tool_name,
+                        arguments=arguments
+                    )
+
+                    print("\nTool execution result:")
+                    print(result.model_dump_json(indent=2))
+
+                except Exception as error:
+                    print(f"Tool execution failed: {error}")
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+
+    except (KeyboardInterrupt, EOFError):
+        print("\nMCP client stopped.")
