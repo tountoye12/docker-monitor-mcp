@@ -122,3 +122,137 @@ def get_latest_report() -> dict | None:
         report = json.loads(row["report_data"])
 
         return report
+
+def save_active_incidents(active_incidents: dict) -> None:
+    """
+    Synchronize active incidents with the database.
+    """
+
+    with closing(get_connection()) as connection:
+
+        with connection:
+            connection.execute(
+                "DELETE FROM active_incidents"
+            )
+
+            for incident in active_incidents.values():
+
+                connection.execute(
+                    """
+                    INSERT INTO active_incidents (
+                        incident_id,
+                        container_id,
+                        container_name,
+                        metric,
+                        severity,
+                        incident_data
+                    )
+                    VALUES (?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        incident["incident_id"],
+                        incident["container_id"],
+                        incident["container_name"],
+                        incident["metric"],
+                        incident["severity"],
+                        json.dumps(incident)
+                    )
+                )
+
+    logger.info(
+        "Saved %s active incidents.",
+        len(active_incidents)
+    )
+
+def get_active_incidents() -> list[dict]:
+    """
+    Retrieve all active incidents from the database.
+    """
+
+    with closing(get_connection()) as connection:
+
+        rows = connection.execute(
+            """
+            SELECT incident_data
+            FROM active_incidents
+            ORDER BY
+                CASE severity
+                    WHEN 'critical' THEN 1
+                    WHEN 'warning' THEN 2
+                    ELSE 3
+                END,
+                container_name
+            """
+        ).fetchall()
+
+        incidents = [
+            json.loads(row["incident_data"])
+            for row in rows
+        ]
+
+        return incidents
+
+
+def save_incident_history(events: list[dict]) -> None:
+    """
+    Save new incident lifecycle events to the database.
+    """
+
+    if not events:
+        return
+
+    with closing(get_connection()) as connection:
+
+        with connection:
+            for event in events:
+
+                connection.execute(
+                    """
+                    INSERT INTO incident_history (
+                        incident_id,
+                        event,
+                        timestamp,
+                        incident_data
+                    )
+                    VALUES (?, ?, ?, ?)
+                    """,
+                    (
+                        event["incident_id"],
+                        event["event"],
+                        event["updated_at"],
+                        json.dumps(event)
+                    )
+                )
+
+    logger.info(
+        "Saved %s incident history events.",
+        len(events)
+    )
+
+
+def get_incident_history(limit: int = 50) -> list[dict]:
+    """
+    Retrieve recent incident lifecycle events.
+    """
+
+    if not 1 <= limit <= 1000:
+        raise ValueError("Limit must be between 1 and 1000.")
+
+    with closing(get_connection()) as connection:
+
+        rows = connection.execute(
+            """
+            SELECT incident_data
+            FROM incident_history
+            ORDER BY id DESC
+            LIMIT ?
+            """,
+            (limit,)
+        ).fetchall()
+
+        history = [
+            json.loads(row["incident_data"])
+            for row in rows
+        ]
+
+        return history
