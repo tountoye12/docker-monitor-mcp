@@ -20,6 +20,10 @@ ERROR_CRITICAL = int(os.getenv("ERROR_CRITICAL", "5"))
 # Monitoring interval (seconds)
 MONITORING_INTERVAL = int(os.getenv("MONITORING_INTERVAL", "60"))
 
+MONITORING_STALE_AFTER = int(
+    os.getenv("MONITORING_STALE_AFTER", "180")
+)
+
 def validate_thresholds() -> None:
     """
     Validate monitoring threshold configuration.
@@ -39,3 +43,8 @@ def validate_thresholds() -> None:
 
     if MONITORING_INTERVAL <= 0:
         raise ValueError("Monitoring interval must be positive.")
+
+    if MONITORING_STALE_AFTER <= 0:
+        raise ValueError(
+            "MONITORING_STALE_AFTER must be positive."
+        )
