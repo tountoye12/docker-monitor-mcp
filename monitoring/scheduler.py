@@ -5,6 +5,14 @@ from config.thresholds import MONITORING_INTERVAL
 from monitoring.engine import MonitoringEngine
 from incidents.manager import IncidentManager
 
+from storage.database import (
+    initialize_database,
+    get_active_incidents,
+    save_monitoring_report,
+    save_active_incidents,
+    save_incident_history,
+)
+
 
 logger = logging.getLogger(__name__)
 
@@ -15,14 +23,17 @@ class MonitoringScheduler:
     """
 
     def __init__(self):
+        initialize_database()
+
         self.engine = MonitoringEngine()
         self.incident_manager = IncidentManager()
         self.interval = MONITORING_INTERVAL
 
+        self.restore_incidents()
+
         logger.info(
             "Monitoring scheduler initialized."
         )
-
 
     def start(self) -> None:
         """
@@ -41,6 +52,9 @@ class MonitoringScheduler:
                     # Process infrastructure incidents
                     self.process_monitoring_report(report)
 
+                    # Persist monitoring data to SQLite
+                    self.persist_monitoring_data(report)
+
                     logger.info(
                         "Monitoring summary: %s",
                         report["summary"]
@@ -58,7 +72,6 @@ class MonitoringScheduler:
 
         except KeyboardInterrupt:
             logger.info("Monitoring scheduler stopped.")
-
 
 
     def process_monitoring_report(self, report: dict) -> None:
@@ -93,6 +106,42 @@ class MonitoringScheduler:
                     data.get(severity_key, "unknown"),
                     data.get(value_key)
                 )
+
+    def restore_incidents(self) -> None:
+        """
+        Restore previously active incidents from SQLite.
+        """
+        incidents = get_active_incidents()
+
+        self.incident_manager.active_incidents = {
+            incident["incident_id"]: incident
+            for incident in incidents
+        }
+
+        logger.info(
+            "Restored %s active incidents.",
+            len(incidents)
+        )
+
+    def persist_monitoring_data(self, report: dict) -> None:
+        """
+        Persist monitoring reports and incident data.
+        """
+
+        save_monitoring_report(report)
+
+        save_active_incidents(
+            self.incident_manager.active_incidents
+        )
+
+        save_incident_history(
+            self.incident_manager.incident_history
+        )
+
+        # Clear historical events after successful storage
+        self.incident_manager.incident_history.clear()
+
+        logger.info("Monitoring data persisted successfully.")
 
 
 def main() -> None:
