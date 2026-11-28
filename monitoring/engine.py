@@ -67,8 +67,6 @@ class MonitoringEngine:
 
         return stats_data
 
-
-
     def collect_errors(
         self, container_name: str, lines: int = 100
     ) -> dict:
@@ -80,8 +78,6 @@ class MonitoringEngine:
         )
 
         return error_data
-
-
 
     def track_restarts(
         self, container_id: str, restart_count: int
@@ -291,7 +287,8 @@ class MonitoringEngine:
 
             for key, value in section_data.items():
                 if key.endswith("_severity"):
-                    severities.append(value)
+                    if value != "not_applicable":
+                        severities.append(value)
 
         if "critical" in severities:
             return "critical"

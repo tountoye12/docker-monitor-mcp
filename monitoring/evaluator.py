@@ -82,4 +82,7 @@ def evaluate_health(health: str) -> str:
     if health == "unhealthy":
         return "critical"
 
+    if health in {"not_configured", "none"}:
+        return "not_applicable"
+
     return "unknown"
